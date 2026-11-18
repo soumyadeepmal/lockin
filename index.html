@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08080c">
+<title>LockIn — Study or Regret</title>
+<style>
+  :root{
+    --bg:#08080c; --bg2:#0f0f16; --card:#14141f; --line:rgba(255,255,255,.07);
+    --txt:#f4f4fa; --dim:#9a9ab0; --acc:#f97316; --acc2:#ef4444; --good:#22c55e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       min-height:100vh;padding-bottom:80px}
+  ::-webkit-scrollbar{display:none}
+
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;
+    padding:14px 16px;background:rgba(8,8,12,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .logo{font-size:21px;font-weight:900;letter-spacing:.5px}
+  .logo span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .streakpill{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--card);
+    border:1px solid var(--line);padding:7px 13px;border-radius:30px;font-weight:900;font-size:14px}
+  .streakpill b{color:var(--acc)}
+
+  .wrap{padding:16px}
+  .hi{font-size:13px;color:var(--dim);font-weight:700}
+  .big{font-size:26px;font-weight:900;margin:2px 0 14px}
+
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 10px;text-align:center}
+  .stat .n{font-size:20px;font-weight:900}
+  .stat .l{font-size:10px;color:var(--dim);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+
+  .sect{display:flex;align-items:baseline;margin:18px 0 10px}
+  .sect h3{font-size:16px;font-weight:900}
+  .sect small{margin-left:auto;color:var(--dim);font-size:11px;font-weight:700}
+
+  .task{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:14px;margin-bottom:10px}
+  .task .tm{font-size:11px;font-weight:900;color:var(--acc);background:rgba(249,115,22,.12);
+    padding:4px 9px;border-radius:9px;min-width:52px;text-align:center}
+  .task .nm{flex:1;font-weight:700;font-size:14px}
+  .task.done .nm{color:var(--dim);text-decoration:line-through}
+  .chk{width:28px;height:28px;border-radius:50%;border:2px solid var(--dim);background:none;color:#fff;
+    font-size:14px;cursor:pointer;flex:none}
+  .task.done .chk{background:var(--good);border-color:var(--good)}
+  .del{border:none;background:none;color:#555;font-size:16px;cursor:pointer}
+
+  .btn{display:block;width:100%;padding:15px;border-radius:16px;border:none;font-size:15px;font-weight:900;cursor:pointer;text-align:center}
+  .btn-p{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff}
+  .btn-g{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn:active{transform:scale(.98)}
+  .row2{display:flex;gap:10px}.row2 .btn{flex:1}
+
+  .form label{display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
+  .form input,.form select{width:100%;padding:13px 14px;border-radius:13px;border:1px solid var(--line);
+    background:var(--card);color:var(--txt);font-size:15px;outline:none;font-family:inherit}
+  .form input:focus,.form select:focus{border-color:var(--acc)}
+
+  .durgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 16px}
+  .dur{padding:16px 4px;border-radius:16px;border:1px solid var(--line);background:var(--card);
+    color:var(--txt);font-weight:900;font-size:16px;cursor:pointer;text-align:center}
+  .dur small{display:block;font-size:9px;color:var(--dim);font-weight:800;letter-spacing:1px;margin-top:3px}
+  .dur.on{border-color:var(--acc);background:rgba(249,115,22,.14);color:var(--acc)}
+
+  /* fullscreen focus overlay */
+  .focus{position:fixed;inset:0;z-index:90;background:radial-gradient(120% 100% at 50% 0%,#17110c 0%,#08080c 60%);
+    display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+  .focus.open{display:flex}
+  .focus .taskname{font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
+  .clock{font-size:82px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:2px;line-height:1}
+  .ring{width:230px;height:230px;margin:20px 0 8px;position:relative;display:grid;place-items:center}
+  .ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+  .ring .clock{position:relative}
+  .focus .warn{color:var(--dim);font-size:12px;margin:14px 0 22px;line-height:1.6;max-width:280px}
+  .abandon{background:none;border:1px solid rgba(239,68,68,.4);color:#f87171;padding:11px 22px;
+    border-radius:30px;font-size:12px;font-weight:800;cursor:pointer}
+  .paused .clock{color:var(--acc)}
+
+  /* roast / modal */
+  .overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.78);display:none;align-items:center;
+    justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+  .overlay.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:24px;width:100%;
+    max-width:360px;text-align:center;animation:pop .18s ease}
+  @keyframes pop{from{transform:scale(.92);opacity:.4}to{transform:none;opacity:1}}
+  .modal .emo{font-size:44px}
+  .modal h2{font-size:19px;font-weight:900;margin:10px 0 8px}
+  .modal p{color:#c9c9dd;font-size:14px;line-height:1.6;margin-bottom:18px}
+  .modal input{width:100%;padding:13px;border-radius:13px;border:1px solid rgba(239,68,68,.5);background:var(--card);
+    color:var(--txt);font-size:14px;text-align:center;outline:none;margin-bottom:12px;font-family:inherit}
+
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;background:rgba(10,10,15,.94);
+    backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:none;border:none;color:var(--dim);font-size:10px;font-weight:700;
+    display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px}
+  nav button .ic{font-size:19px}
+  nav button.on{color:var(--txt)}
+  nav button.on .ic{filter:drop-shadow(0 0 8px var(--acc))}
+
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:26px 16px 10px;line-height:1.7}
+  footer b{color:var(--txt)}
+  .empty{color:var(--dim);text-align:center;padding:34px 20px;font-size:14px;line-height:1.7}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1c1c28;border:1px solid var(--acc);
+    color:var(--txt);padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:110;display:none;
+    max-width:86vw;text-align:center}
+  .barwrap{height:8px;background:var(--card);border-radius:8px;overflow:hidden;margin:8px 0 4px}
+  .bar{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:8px;transition:width .4s}
+  .hist{display:flex;gap:6px;justify-content:center;margin-top:8px}
+  .hist div{width:30px;height:38px;border-radius:9px;background:var(--card);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:13px}
+  .hist .y{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LOCK<span>IN</span></div>
+  <div class="streakpill">🔥 <b id="streakN">0</b>&nbsp;day streak</div>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  Built for students who mean it. No excuses. 📵<br>
+  made by <b>Soumyadeep</b> 🖤
+</footer>
+
+<nav>
+  <button data-v="today" class="on"><span class="ic">📋</span>Today</button>
+  <button data-v="routine"><span class="ic">🛠️</span>Routine</button>
+  <button data-v="focus"><span class="ic">⏳</span>Focus</button>
+  <button data-v="stats"><span class="ic">📊</span>Stats</button>
+</nav>
+
+<div class="focus" id="focusView"></div>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =============== data =============== */
+const $=s=>document.querySelector(s);
+const today=()=>new Date().toISOString().slice(0,10);
+const LS={
+  get(k,d){try{const v=JSON.parse(localStorage.getItem("lk-"+k));return v==null?d:v}catch(e){return d}},
+  set(k,v){localStorage.setItem("lk-"+k,JSON.stringify(v))}
+};
+let tasks=LS.get("tasks",[]);            // [{id,time,name}]
+let days =LS.get("days",{});             // {date:{focus:mins,done:[taskIds],quits:n}}
+let roasts=LS.get("roasts",0);
+if(!days[today()])days[today()]={focus:0,done:[],quits:0};
+
+function save(){LS.set("tasks",tasks);LS.set("days",days);LS.set("roasts",roasts)}
+function day(d){if(!days[d])days[d]={focus:0,done:[],quits:0};return days[d]}
+
+function streak(){
+  let s=0;const d=new Date();
+  if(!day(today()).focus && !day(today()).done.length) d.setDate(d.getDate()-1);
+  for(;;){
+    const k=d.toISOString().slice(0,10);
+    const rec=days[k];
+    if(rec&&(rec.focus>0||rec.done.length>0)){s++;d.setDate(d.getDate()-1)}
+    else break;
+  }
+  return s;
+}
+
+const ROASTS=[
+ "Quitting already? Your future self just sighed.",
+ "The books will not read themselves, champion.",
+ "Every quit is a vote for the person you do not want to be.",
+ "Your excuses are improving. Your marks are not.",
+ "Focus left the chat. So did your dreams.",
+ "Discipline: 0. Drama: 100.",
+ "Even the timer is embarrassed for you.",
+ "You vs. distraction. Distraction wins. Again.",
+ "Notifications can wait. Your exams will not.",
+ "This app believed in you. Stop proving it wrong.",
+ "Your desk is judging you right now.",
+ "One more skip and your streak files a missing-person report.",
+ "Comfort zone called. It says thanks for the rent.",
+ "That '5 minute break' is how toppers become memories.",
+ "Skipping study to scroll? Bold strategy for an exam you will fail."
+];
+const WINS=[
+ "Session crushed. That is how toppers are made.",
+ "Clean focus. Keep this energy.",
+ "One session closer to the version of you that wins.",
+ "Done. Your future self says thanks."
+];
+const roast=()=>ROASTS[Math.floor(Math.random()*ROASTS.length)];
+const win=()=>WINS[Math.floor(Math.random()*WINS.length)];
+
+/* =============== views =============== */
+let view="today";
+function render(){
+  $("#streakN").textContent=streak();
+  const app=$("#app");
+  if(view==="today")return vToday(app);
+  if(view==="routine")return vRoutine(app);
+  if(view==="focus")return vFocus(app);
+  return vStats(app);
+}
+
+function vToday(app){
+  const t=day(today());
+  const total=tasks.length, doneN=t.done.length;
+  const pct=total?Math.round(doneN/total*100):0;
+  const sorted=tasks.slice().sort((a,b)=>a.time.localeCompare(b.time));
+  let h='<div class="wrap"><div class="hi">'+new Date().toDateString()+'</div>'+
+    '<div class="big">Today\'s Battle Plan</div>'+
+    '<div class="statgrid">'+
+      '<div class="stat"><div class="n">'+doneN+'/'+total+'</div><div class="l">Tasks</div></div>'+
+      '<div class="stat"><div class="n">'+t.focus+'</div><div class="l">Focus min</div></div>'+
+      '<div class="stat"><div class="n">'+t.quits+'</div><div class="l">Quits 😬</div></div></div>';
+  if(total){
+    h+='<div class="sect"><h3>Progress</h3><small>'+pct+'%</small></div>'+
+       '<div class="barwrap"><div class="bar" style="width:'+pct+'%"></div></div>';
+  }
+  h+='<div class="sect"><h3>Routine</h3><small>'+(total?total+" tasks":"none yet")+'</small></div>';
+  if(!total)h+='<div class="empty">No routine yet.<br>Go to <b>🛠️ Routine</b> and add your first study task.<br>Future you is watching.</div>';
+  for(const x of sorted){
+    const dn=t.done.includes(x.id);
+    h+='<div class="task'+(dn?' done':'')+'"><span class="tm">'+x.time+'</span><span class="nm">'+esc(x.name)+'</span>'+
+       '<button class="chk" onclick="toggleTask(\''+x.id+'\')">'+(dn?'✓':'')+'</button></div>';
+  }
+  h+='<br><button class="btn btn-p" onclick="go(\'focus\')">⏳ START FOCUS SESSION</button></div>';
+  app.innerHTML=h;
+}
+
+function vRoutine(app){
+  const sorted=tasks.slice().sort((a,b)=>a.time.localeCompare(b.time));
+  let h='<div class="wrap"><div class="big">Build Your Routine</div>'+
+    '<div class="hi">Add fixed study blocks. They repeat every day. No mercy.</div><div class="form">'+
+    '<label>Task name</label><input id="t-name" placeholder="e.g. Physics chapter 4" maxlength="60">'+
+    '<label>Time</label><input id="t-time" type="time" value="18:00">'+
+    '<br><button class="btn btn-p" onclick="addTask()">＋ Add Task</button></form>'+
+    '<div class="sect"><h3>Your daily blocks</h3><small>'+tasks.length+'</small></div>';
+  if(!sorted.length)h+='<div class="empty">Nothing here. Even 30 minutes a day beats zero.</div>';
+  for(const x of sorted)
+    h+='<div class="task"><span class="tm">'+x.time+'</span><span class="nm">'+esc(x.name)+'</span>'+
+       '<button class="del" onclick="delTask(\''+x.id+'\')">✕</button></div>';
+  app.innerHTML=h+'</div>';
+}
+
+let pickMin=25;
+function vFocus(app){
+  const t=day(today());
+  const names=tasks.length?tasks.slice().sort((a,b)=>a.time.localeCompare(b.time)):[];
+  let h='<div class="wrap"><div class="big">Focus Chamber 🔒</div>'+
+    '<div class="hi">Pick a duration. Once you start, leaving is... frowned upon.</div><br>'+
+    '<div class="form"><label>Duration (minutes)</label><div class="durgrid">'+
+    [25,45,60,90].map(m=>'<button class="dur'+(m===pickMin?' on':'')+'" onclick="pick('+m+')">'+m+'<small>MIN</small></button>').join("")+
+    '</div>'+
+    '<label>Studying what? (optional)</label><select id="f-task"><option value="">General study</option>'+
+    names.map(x=>'<option value="'+esc(x.name)+'">'+x.time+' · '+esc(x.name)+'</option>').join("")+'</select></div>'+
+    '<br><button class="btn btn-p" onclick="startFocus()">🔒 LOCK IN — '+pickMin+' MIN</button>'+
+    '<div class="hi" style="margin-top:14px;line-height:1.7">Rules: fullscreen on. Leaving the tab pauses you and earns a roast. Quitting costs your dignity (and a roast).</div>'+
+    (t.focus?'<div class="sect"><h3>Today so far</h3><small>'+t.focus+' min focused</small></div>':'')+
+    '</div>';
+  app.innerHTML=h;
+}
+function pick(m){pickMin=m;render()}
+
+function vStats(app){
+  let h='<div class="wrap"><div class="big">Receipts 📊</div>';
+  h+='<div class="statgrid">'+
+    '<div class="stat"><div class="n">'+streak()+'</div><div class="l">Day streak</div></div>'+
+    '<div class="stat"><div class="n">'+Object.values(days).reduce((a,d)=>a+d.focus,0)+'</div><div class="l">Total focus min</div></div>'+
+    '<div class="stat"><div class="n">'+roasts+'</div><div class="l">Roasts earned 💀</div></div></div>';
+  h+='<div class="sect"><h3>Last 7 days</h3><small>did you show up?</small></div><div class="hist">';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10),r=days[k];
+    const ok=r&&(r.focus>0||r.done.length>0);
+    h+='<div class="'+(ok?'y':'')+'" title="'+k+'">'+(ok?'✅':'·')+'</div>';
+  }
+  h+='</div><div class="sect"><h3>Verdict</h3></div>';
+  const totalFocus=Object.values(days).reduce((a,d)=>a+d.focus,0);
+  let verdict;
+  if(roasts===0&&totalFocus===0)verdict="No sessions yet. The app is waiting. So are your books.";
+  else if(roasts>totalFocus/25)verdict="More roasts than focus. Fix the ratio, soldier.";
+  else if(streak()>=3)verdict="On fire. Protect the streak with your life.";
+  else verdict="Decent start. Now make it a habit the calendar can feel.";
+  h+='<div class="task"><span class="nm" style="line-height:1.6">'+verdict+'</span></div></div>';
+  app.innerHTML=h;
+}
+
+/* =============== tasks =============== */
+function addTask(){
+  const name=$("#t-name").value.trim(), time=$("#t-time").value||"18:00";
+  if(!name){toast("Task ka naam toh likh 🙂");return}
+  tasks.push({id:"t"+Date.now(),time:time,name:name});
+  save();toast("Task locked in ✔");render();
+}
+function delTask(id){
+  tasks=tasks.filter(t=>t.id!==id);
+  for(const k in days)days[k].done=days[k].done.filter(x=>x!==id);
+  save();render();
+}
+function toggleTask(id){
+  const t=day(today());
+  if(t.done.includes(id))t.done=t.done.filter(x=>x!==id);
+  else{t.done.push(id);toast(tasks.length&&t.done.length===tasks.length?"Full routine complete 🔥":"Done ✔")}
+  save();render();
+}
+
+/* =============== focus engine =============== */
+let F=null; // {left,total,name,paused,iv}
+function startFocus(){
+  const name=($("#f-task")||{}).value||"";
+  F={left:pickMin*60,total:pickMin*60,name:name,paused:false,iv:null};
+  $("#focusView").classList.add("open");
+  document.body.style.overflow="hidden";
+  const el=document.documentElement;
+  if(el.requestFullscreen)el.requestFullscreen().catch(()=>{});
+  drawFocus();
+  F.iv=setInterval(tick,1000);
+}
+function tick(){
+  if(F.paused)return;
+  F.left--;
+  if(F.left<=0){finishFocus();return}
+  drawClock();
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function drawFocus(){
+  $("#focusView").innerHTML=
+    '<div class="taskname">'+(F.name?esc(F.name):"Deep Focus")+'</div>'+
+    '<div class="ring"><svg viewBox="0 0 200 200" width="230" height="230">'+
+      '<circle cx="100" cy="100" r="88" fill="none" stroke="#1c1c28" stroke-width="10"/>'+
+      '<circle id="ringp" cx="100" cy="100" r="88" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="0"/>'+
+      '<defs><linearGradient id="g"><stop offset="0%" stop-color="#f97316"/><stop offset="100%" stop-color="#ef4444"/></linearGradient></defs></svg>'+
+      '<div class="clock" id="clock">'+fmt(F.left)+'</div></div>'+
+    '<div class="warn" id="fwarn">Phone face-down. World off.<br>Pause karne ka option bhi nahi hai. Bas khatam karo.</div>'+
+    '<button class="abandon" onclick="askQuit()">Abandon session</button>';
+  drawClock();
+}
+function drawClock(){
+  if(!F)return;
+  const c=$("#clock");if(c)c.textContent=fmt(F.left);
+  const r=$("#ringp");if(r)r.style.strokeDashoffset=553*(1-F.left/F.total);
+}
+function pauseFocus(why){
+  if(!F||F.paused)return;
+  F.paused=true;
+  $("#focusView").classList.add("paused");
+  const w=$("#fwarn");if(w)w.innerHTML="⏸ Paused — "+why+"<br>Wapas aa. Timer ruka hai, izzat bhi.";
+  showModal("😤","Caught you.",roast(),[{t:"Back to work 🔥",f:resumeFocus}],true);
+}
+function resumeFocus(){
+  hideModal();
+  if(!F)return;
+  F.paused=false;
+  $("#focusView").classList.remove("paused");
+  const w=$("#fwarn");if(w)w.innerHTML="Good. Ab khatam karo.";
+}
+function askQuit(){
+  showModal("💀","Really? Giving up?","Type <b>I QUIT</b> to abandon this session. Your quits counter is watching.",null,false,true);
+}
+function confirmQuit(){
+  const v=($("#quitIn")||{}).value||"";
+  if(v.trim().toUpperCase()!=="I QUIT"){toast("Type exactly: I QUIT");return}
+  day(today()).quits++;roasts++;save();
+  endFocusUI();
+  showModal("🥀","Session abandoned.",roast()+"<br><br>Quits today: <b>"+day(today()).quits+"</b>",[{t:"Samajh gaya",f:hideModal}]);
+}
+function finishFocus(){
+  const mins=Math.round(F.total/60);
+  day(today()).focus+=mins;save();
+  endFocusUI();
+  showModal("🏆","Session complete!",win()+"<br><br>+<b>"+mins+" min</b> focus today. Streak: <b>"+streak()+" 🔥</b>",
+    [{t:"Ek aur round",f:function(){hideModal();go("focus")}},{t:"Done for now",f:function(){hideModal();go("today")}}]);
+}
+function endFocusUI(){
+  if(F&&F.iv)clearInterval(F.iv);
+  F=null;
+  $("#focusView").classList.remove("open","paused");
+  document.body.style.overflow="";
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  render();
+}
+document.addEventListener("visibilitychange",()=>{
+  if(F&&document.hidden)pauseFocus("tab chhoda tune");
+});
+document.addEventListener("fullscreenchange",()=>{
+  if(F&&!F.paused&&!document.fullscreenElement)pauseFocus("fullscreen exit kiya");
+});
+window.addEventListener("beforeunload",e=>{
+  if(F){e.preventDefault();e.returnValue=""}
+});
+
+/* =============== modal / misc =============== */
+function showModal(emo,title,body,btns,roastMode,quitMode){
+  let h='<div class="emo">'+emo+'</div><h2>'+title+'</h2><p>'+body+'</p>';
+  if(quitMode)h+='<input id="quitIn" placeholder="Type I QUIT here" autocomplete="off">';
+  if(quitMode)h+='<div class="row2"><button class="btn btn-g" onclick="hideModal()">Nahi, continue</button>'+
+                 '<button class="btn" style="background:#7f1d1d;color:#fff" onclick="confirmQuit()">I give up</button></div>';
+  else for(const b of btns||[])h+='<button class="btn btn-p" style="margin-top:8px" data-bt="'+b.t.replace(/"/g,"")+'">'+b.t+'</button>';
+  $("#modal").innerHTML=h;
+  (btns||[]).forEach(b=>{
+    const el=Array.from($("#modal").querySelectorAll("[data-bt]")).find(x=>x.dataset.bt===b.t.replace(/"/g,""));
+    if(el)el.onclick=b.f;
+  });
+  $("#overlay").classList.add("open");
+}
+function hideModal(){$("#overlay").classList.remove("open");if(F&&F.paused)resumeFocus()}
+$("#overlay").onclick=e=>{if(e.target.id==="overlay"&&!(F&&F.paused))hideModal()};
+function go(v){
+  view=v;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.v===v));
+  window.scrollTo(0,0);render();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";
+  clearTimeout(t._x);t._x=setTimeout(()=>t.style.display="none",2200)}
+
+render();
+</script>
+</body>
+</html>
